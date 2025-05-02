@@ -101,3 +101,46 @@ curl -i https://test.moongsan.com
 ```
 
 - 정상 응답 예시: `HTTP/1.1 200 OK`
+
+---
+
+### 6. Rollback 스크립트 사용법
+
+서비스에 문제가 생겼을 경우, 백업된 파일로 수동 롤백을 진행할 수 있습니다.
+
++#### ./tmp/*.sh vm 환경에 복사
+
+```bash
+# 예시 - 로컬에서 VM으로 rollback 스크립트 전송 (SSH 키 방식)
+scp -i ~/.ssh/<your-key.pem> ./tmp/rollback_backend.sh ubuntu@<GCP_VM_IP>:~/
+scp -i ~/.ssh/<your-key.pem> ./tmp/rollback_frontend.sh ubuntu@<GCP_VM_IP>:~/
+scp -i ~/.ssh/<your-key.pem> ./tmp/rollback_ai.sh ubuntu@<GCP_VM_IP>:~/
+```
+
+Replace `<GCP_VM_IP>` with your actual VM public IP.  
+Replace `<your-key.pem>` with your SSH private key filename.
+
+> 아래 내용들은 전부 VM으로 ssh 접속한 상태에서 진행
+#### backend
+
+```bash
+cd ~
+sudo ./rollback_backend.sh
+```
+
+#### frontend
+
+```bash
+cd ~
+sudo ./rollback_frontend.sh
+```
+
+#### fastapi
+
+```bash
+cd ~
+sudo ./rollback_ai.sh
+```
+
+- 각 스크립트는 `.bak`으로 백업된 파일이 존재할 때만 동작하며, 실행 중 프로세스를 종료한 뒤 백업 파일로 교체하고 다시 서비스를 기동합니다.
+- 애플리케이션이 정상 동작하는지 간단한 curl 기반 health check도 포함됩니다.
