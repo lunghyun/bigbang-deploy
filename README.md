@@ -1,6 +1,16 @@
 ## Terraform 기반 인프라 실행부터 Ansible 배포까지의 전체 흐름
 
 ### 1. Terraform 인프라 실행
+- 먼저 gcp 키부터 삽입합니다.
+```hcl
+# provider.tf
+provider "google" {
+  credentials = file("/Users/lsh/workspace/downloads/keys/ktb-2-moongsan-d9d52232b71b.json") # 키 경로 삽입(json)
+  project = var.project_id
+  region  = "asia-northeast3"
+  zone    = "asia-northeast3-a"
+}
+```
 
 ```bash
 cd terraform_gcp_moongsan/
