@@ -1,0 +1,7 @@
+ansible_moongsan/.DS_Store
+ansible_moongsan/tmp/.DS_Store
+terraform_gcp_moongsan/.terraform/*
+.terraform.lock.hcl
+terraform_gcp_moongsan/.DS_Store
+terraform_gcp_moongsan/terraform.tfstate
+terraform_gcp_moongsan/terraform.tfstate.backup

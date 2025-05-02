@@ -1,0 +1,42 @@
+- name: Install common packages
+  apt:
+    name:
+      - nginx
+      - mysql-server
+      - openjdk-17-jdk
+      - python3-pip
+      - git
+      - curl
+    state: present
+    update_cache: yes
+
+- name: Install Node.js
+  shell: |
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    apt-get install -y nodejs
+  register: nodejs_install_result
+  retries: 5
+  delay: 10
+  until: nodejs_install_result.rc == 0
+
+- name: Install Python packages
+  pip:
+    name:
+      - fastapi
+      - uvicorn
+    state: present
+    executable: pip3
+
+- name: Ensure certbot is installed
+  apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Install PyMySQL for Ansible MySQL modules
+  pip:
+    name: PyMySQL
+    executable: pip3

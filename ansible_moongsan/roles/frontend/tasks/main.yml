@@ -1,0 +1,48 @@
+- name: Clone frontend repository
+  git:
+    repo: https://github.com/lunghyun/mock_frontend.git
+    dest: /home/ubuntu/mock_frontend
+    update: yes
+    version: main # 브랜치
+
+- name: Install frontend dependencies
+  npm:
+    path: /home/ubuntu/mock_frontend
+    state: present
+
+- name: Build frontend project
+  shell: npm run build
+  args:
+    chdir: /home/ubuntu/mock_frontend
+
+- name: Copy build to nginx
+  copy:
+    src: /home/ubuntu/mock_frontend/dist/
+    dest: /var/www/react/
+    remote_src: yes
+
+- name: Health check for React frontend (via localhost)
+  shell: curl -s https://{{ nginx_domain }} | grep -q '<div id="root">'
+  register: frontend_health
+  failed_when: frontend_health.rc != 0
+  changed_when: false
+
+- name: Backup current frontend build after health check
+  shell: cp -r /var/www/react /var/www/react.bak
+  when: frontend_health.rc == 0
+  become: true
+
+- name: Ensure logrotate config for frontend exists
+  copy:
+    dest: /etc/logrotate.d/frontend
+    content: |
+      /home/ubuntu/frontend.log {
+          weekly
+          rotate 4
+          compress
+          delaycompress
+          missingok
+          notifempty
+          create 0644 ubuntu ubuntu
+      }
+  become: true

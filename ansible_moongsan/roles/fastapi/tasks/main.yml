@@ -1,0 +1,62 @@
+- name: Clone or update FastAPI repository
+  git:
+    repo: https://github.com/lunghyun/mock_fastapi.git
+    dest: /home/ubuntu/mock_fastapi
+    update: yes
+
+- name: Create FastAPI systemd service file
+  copy:
+    dest: /etc/systemd/system/fastapi.service
+    content: |
+      [Unit]
+      Description=FastAPI service
+      After=network.target
+
+      [Service]
+      User=ubuntu
+      WorkingDirectory=/home/ubuntu/mock_fastapi
+      ExecStart=/usr/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers
+      StandardOutput=append:/home/ubuntu/fastapi.log
+      StandardError=append:/home/ubuntu/fastapi.log
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+  become: true
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: true
+
+- name: Enable and restart FastAPI service
+  systemd:
+    name: fastapi
+    enabled: true
+    state: restarted
+
+- name: Health check for FastAPI
+  shell: |
+    curl -sf http://localhost:8000/ai/hello | grep -q 'Hello from FastAPI mock!'
+  register: fastapi_health_check
+  failed_when: fastapi_health_check.rc != 0
+  ignore_errors: false
+
+- name: Backup FastAPI app directory after successful health check
+  shell: cp -r /home/ubuntu/mock_fastapi /home/ubuntu/mock_fastapi.bak
+  when: fastapi_health_check.rc == 0
+  become: true
+
+- name: Ensure logrotate config for FastAPI exists
+  copy:
+    dest: /etc/logrotate.d/fastapi
+    content: |
+      /home/ubuntu/fastapi.log {
+          weekly
+          rotate 4
+          compress
+          delaycompress
+          missingok
+          notifempty
+          create 0644 ubuntu ubuntu
+      }
+  become: true

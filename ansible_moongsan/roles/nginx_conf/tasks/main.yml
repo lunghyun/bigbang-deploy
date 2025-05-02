@@ -1,0 +1,108 @@
+- name: Backup existing nginx default conf
+  command: mv /etc/nginx/sites-available/default /etc/nginx/sites-available/default.bak
+  ignore_errors: yes
+
+- name: Step 1 - Deploy HTTP-only nginx config
+  copy:
+    dest: /etc/nginx/sites-available/default
+    force: yes
+    backup: yes
+    content: |
+      server {
+          listen 80;
+          server_name {{ nginx_domain }};
+
+          root /var/www/react;
+          index index.html;
+
+          location / {
+              try_files $uri $uri/ /index.html;
+          }
+
+          location /api/ {
+              proxy_pass http://localhost:8080;
+              proxy_http_version 1.1;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+
+              add_header Access-Control-Allow-Origin *;
+              add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+              add_header Access-Control-Allow-Headers "*";
+          }
+
+          location /ai/ {
+              proxy_pass http://localhost:8000;
+
+              # ⬇ FastAPI가 올바른 Host 헤더를 보도록 강제
+              proxy_set_header Host $host;
+              proxy_set_header X-Forwarded-Host $host;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          }
+      }
+
+- name: Reload nginx (step 1)
+  service:
+    name: nginx
+    state: reloaded
+
+- name: Step 2 - Run certbot
+  command: certbot --nginx -d {{ nginx_domain }} --non-interactive --agree-tos -m {{ ssl_email }}
+
+- name: Step 3 - Deploy final HTTPS nginx config
+  copy:
+    dest: /etc/nginx/sites-available/default
+    force: yes
+    backup: yes
+    content: |
+      server {
+          listen 80;
+          server_name {{ nginx_domain }};
+
+          return 301 https://{{ nginx_domain }}$request_uri;
+      }
+
+      server {
+          listen 443 ssl;
+          server_name {{ nginx_domain }};
+
+          ssl_certificate /etc/letsencrypt/live/{{ nginx_domain }}/fullchain.pem;
+          ssl_certificate_key /etc/letsencrypt/live/{{ nginx_domain }}/privkey.pem;
+
+          root /var/www/react;
+          index index.html;
+
+          location / {
+              try_files $uri $uri/ /index.html;
+          }
+
+          location /api/ {
+              proxy_pass http://localhost:8080;
+              proxy_http_version 1.1;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+
+              add_header Access-Control-Allow-Origin *;
+              add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+              add_header Access-Control-Allow-Headers "*";
+          }
+
+          location /ai/ {
+              proxy_pass http://localhost:8000;
+
+              # ⬇ FastAPI가 올바른 Host 헤더를 보도록 강제
+              proxy_set_header Host $host;
+              proxy_set_header X-Forwarded-Host $host;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          }
+      }
+
+- name: Reload nginx
+  service:
+    name: nginx
+    state: reloaded

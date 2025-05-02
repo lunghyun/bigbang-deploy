@@ -1,0 +1,62 @@
+- name: Force update backend repository
+  shell: |
+    if [ -d /home/ubuntu/mock_backend ]; then
+      cd /home/ubuntu/mock_backend && git fetch origin && git reset --hard origin/main
+    else
+      git clone https://github.com/lunghyun/mock_backend.git /home/ubuntu/mock_backend
+    fi
+  args:
+    executable: /bin/bash
+
+- name: Mark backend repo as safe for git
+  shell: git config --global --add safe.directory /home/ubuntu/mock_backend
+  become: false
+  args:
+    executable: /bin/bash
+
+- name: Build backend project
+  shell: ./gradlew clean build -x test
+  args:
+    chdir: /home/ubuntu/mock_backend
+
+- name: Stop existing backend application
+  shell: |
+    pkill -f 'mock_backend' || true
+  ignore_errors: true
+
+- name: Run backend application
+  shell: |
+    nohup java -jar /home/ubuntu/mock_backend/build/libs/mock_backend-0.0.1-SNAPSHOT.jar > /home/ubuntu/backend.log 2>&1 &
+
+- name: Wait for backend to be ready
+  uri:
+    url: http://localhost:8080/api/hello
+    status_code: 200
+    timeout: 3
+  register: backend_health
+  retries: 3
+  delay: 2
+  until: backend_health.status == 200
+
+- name: Backup built backend jar if health check passes
+  shell: |
+    JAR_PATH="/home/ubuntu/mock_backend/build/libs/mock_backend-0.0.1-SNAPSHOT.jar"
+    cp "$JAR_PATH" "$JAR_PATH.bak"
+  when: backend_health.status == 200
+  args:
+    executable: /bin/bash
+
+- name: Ensure logrotate config for backend exists
+  copy:
+    dest: /etc/logrotate.d/backend
+    content: |
+      /home/ubuntu/backend.log {
+          weekly
+          rotate 4
+          compress
+          delaycompress
+          missingok
+          notifempty
+          create 0644 ubuntu ubuntu
+      }
+  become: true

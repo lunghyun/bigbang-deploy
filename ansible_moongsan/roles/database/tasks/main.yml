@@ -1,0 +1,20 @@
+- name: Create database
+  community.mysql.mysql_db:
+    name: "{{ db_name }}"
+    state: present
+    encoding: utf8mb4
+    collation: utf8mb4_general_ci
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+- name: Create database user and grant privileges
+  community.mysql.mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    priv: "{{ db_name }}.*:ALL"
+    host: localhost
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  vars:
+    ansible_python_interpreter: /usr/bin/python3

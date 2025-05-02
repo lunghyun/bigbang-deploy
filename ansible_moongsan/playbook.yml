@@ -1,0 +1,18 @@
+- name: Setup Production Server
+  hosts: prod
+  become: yes
+  roles:
+    - {role: common, tags: common}
+    - {role: database, tags: database}
+    - {role: nginx_conf, tags: nginx_conf}
+    - {role: fastapi, tags: fastapi}
+    - {role: backend, tags: backend}
+    - {role: frontend, tags: frontend}
+# - name: Setup Development Server
+#   hosts: dev
+#   become: yes
+#   roles:
+#     - common
+#     - frontend
+#     - backend
+#     - nginx_conf

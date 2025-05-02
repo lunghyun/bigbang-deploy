@@ -1,0 +1,5 @@
+nginx_domain: test.moongsan.com
+ssl_email: nangmannsh@gmail.com
+db_name: mockdb
+db_user: mockuser
+db_password: mockpassword
