@@ -108,7 +108,7 @@ curl -i https://test.moongsan.com
 
 서비스에 문제가 생겼을 경우, 백업된 파일로 수동 롤백을 진행할 수 있습니다.
 
-+#### ./tmp/*.sh vm 환경에 복사
+#### ./tmp/*.sh vm 환경에 복사
 
 ```bash
 # 예시 - 로컬에서 VM으로 rollback 스크립트 전송 (SSH 키 방식)
@@ -116,9 +116,6 @@ scp -i ~/.ssh/<your-key.pem> ./tmp/rollback_backend.sh ubuntu@<GCP_VM_IP>:~/
 scp -i ~/.ssh/<your-key.pem> ./tmp/rollback_frontend.sh ubuntu@<GCP_VM_IP>:~/
 scp -i ~/.ssh/<your-key.pem> ./tmp/rollback_ai.sh ubuntu@<GCP_VM_IP>:~/
 ```
-
-Replace `<GCP_VM_IP>` with your actual VM public IP.  
-Replace `<your-key.pem>` with your SSH private key filename.
 
 > 아래 내용들은 전부 VM으로 ssh 접속한 상태에서 진행
 #### backend
