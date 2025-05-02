@@ -149,3 +149,20 @@ sudo ./rollback_ai.sh
 | 백엔드      | `/home/ubuntu/mock_backend/build/libs/mock_backend-0.0.1-SNAPSHOT.jar.bak` | Spring Boot 앱 jar 백업              |
 | 프론트엔드   | `/var/www/react.bak`                                      | React 정적 파일 디렉터리 백업        |
 | FastAPI    | `/home/ubuntu/mock_fastapi/app.bak`                       | FastAPI 앱 디렉터리 전체 백업        |
+
+### 7. 배포 플로우 차트
+```mermaid
+flowchart TD
+    A[Terraform으로 VM 생성] --> B["도메인 설정 (Route 53)"]
+    B --> C[Ansible로 초기 패키지 설치]
+    C --> D[Ansible로 각 서비스 배포]
+    D --> D1[Backend: git clone → build → run]
+    D --> D2[Frontend: build → copy to /var/www]
+    D --> D3[FastAPI: copy → systemd 등록 → run]
+    D1 --> E[Health Check - /api/hello]
+    D2 --> E
+    D3 --> E
+    E --> F{Health Check 통과?}
+    F -- No --> G[자동 롤백: .bak 파일 복원 + 재시작]
+    F -- Yes --> H[배포 성공 로그 기록 및 종료]
+```
