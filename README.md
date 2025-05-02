@@ -141,3 +141,11 @@ sudo ./rollback_ai.sh
 
 - 각 스크립트는 `.bak`으로 백업된 파일이 존재할 때만 동작하며, 실행 중 프로세스를 종료한 뒤 백업 파일로 교체하고 다시 서비스를 기동합니다.
 - 애플리케이션이 정상 동작하는지 간단한 curl 기반 health check도 포함됩니다.
+
+#### 백업된 `.bak` 파일의 기본 위치
+
+| 서비스       | 경로                                                       | 설명                                 |
+|------------|----------------------------------------------------------|------------------------------------|
+| 백엔드      | `/home/ubuntu/mock_backend/build/libs/mock_backend-0.0.1-SNAPSHOT.jar.bak` | Spring Boot 앱 jar 백업              |
+| 프론트엔드   | `/var/www/react.bak`                                      | React 정적 파일 디렉터리 백업        |
+| FastAPI    | `/home/ubuntu/mock_fastapi/app.bak`                       | FastAPI 앱 디렉터리 전체 백업        |
