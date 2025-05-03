@@ -11,6 +11,7 @@ variable "vm_machine_type" {
 
 variable "ubuntu_image" {
   default = "ubuntu-os-cloud/ubuntu-2204-lts"
+  # Amazon Linux 2023
 }
 
 variable "ssh_user" {
